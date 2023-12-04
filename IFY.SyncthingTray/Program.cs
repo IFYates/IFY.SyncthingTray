@@ -10,6 +10,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.local.json", optional: true);
 
 builder.Services.Configure<SyncthingAPI.Configuration>(builder.Configuration.GetSection("Syncthing"));
+builder.Services.Configure<SyncthingMonitor.Configuration>(builder.Configuration.GetSection("Syncthing"));
 
 builder.Services.AddHostedService<SyncthingMonitor>();
 builder.Services.AddSingleton<SyncthingAPI>();
@@ -34,38 +35,19 @@ systrayIcon.IconDoubleClickAction = () =>
 systrayIcon.IconRightClickAction = () => systrayIcon.Close();
 systrayIcon.IconLeftClickAction = () =>
 {
-    // Copy image to temp file
-    var imgPath = Path.GetTempFileName();
-    var img = GetStateIcon(getOverallState());
-    img.Save(imgPath);
-
-    new ToastContentBuilder()
-        .AddAppLogoOverride(new Uri("file:///" + imgPath.Replace('\\', '/')))
-        .AddText("State: " + systrayIcon.HoverText, AdaptiveTextStyle.Base)
-        .AddText($"{monitor.Folders.Count} folders", AdaptiveTextStyle.Body)
-        .SetToastDuration(ToastDuration.Short)
-        //.AddProgressBar(
-        .AddButton("Open website", ToastActivationType.Foreground, string.Empty)
-        .Show(t =>
-        {
-            t.Tag = Application.ProductName; // For replacing previous
-            //t.SuppressPopup = true;
-
-            t.Activated += (_, _) => systrayIcon.IconDoubleClickAction();
-            t.Dismissed += (_, _) => File.Delete(imgPath);
-        });
-
-    // IDEA: One toast for overall + individual progress per folder
+    showNotification(getOverallState());
 };
 
+string? _lastError = null;
 monitor.OnError = (reason) =>
 {
     systrayIcon.HoverText = reason;
     systrayIcon.ReplaceIcon(GetStateIcon(Status.Error));
 
-    if (monitor.NotifyOnFailure)
+    if (_lastError != reason && monitor.NotifyOnFailure)
     {
-        systrayIcon.IconLeftClickAction();
+        showNotification(Status.Error);
+        _lastError = reason;
     }
 };
 monitor.OnStateChanged = () =>
@@ -82,6 +64,7 @@ monitor.OnStateChanged = () =>
         Status.OK => "Up-to-date",
         _ => "Unknown",
     };
+    _lastError = null;
 
     if (monitor.NotifyOnFailure && state is Status.Error or Status.Disconnected)
     {
@@ -92,6 +75,7 @@ monitor.OnStateChanged = () =>
 // Start
 _ = host.RunAsync().ContinueWith(_ => systrayIcon.Stop());
 Application.Run(systrayIcon);
+await host.StopAsync();
 
 Status getOverallState()
 {
@@ -115,3 +99,28 @@ static Bitmap GetStateIcon(Status state)
         Status.Error or Status.Disconnected => Images.icon_R,
         _ => Images.icon_X
     };
+void showNotification(Status state)
+{
+    // Copy image to temp file
+    var imgPath = Path.GetTempFileName();
+    var img = GetStateIcon(state);
+    img.Save(imgPath);
+
+    new ToastContentBuilder()
+        .AddAppLogoOverride(new Uri("file:///" + imgPath.Replace('\\', '/')))
+        .AddText("State: " + systrayIcon.HoverText, AdaptiveTextStyle.Base)
+        .AddText($"{monitor.Folders.Count} folders", AdaptiveTextStyle.Body)
+        .SetToastDuration(ToastDuration.Short)
+        //.AddProgressBar(
+        .AddButton("Open website", ToastActivationType.Foreground, string.Empty)
+        .Show(t =>
+        {
+            t.Tag = Application.ProductName; // For replacing previous
+            //t.SuppressPopup = true;
+
+            t.Activated += (_, _) => systrayIcon.IconDoubleClickAction();
+            t.Dismissed += (_, _) => File.Delete(imgPath);
+        });
+
+    // IDEA: One toast for overall + individual progress per folder
+}

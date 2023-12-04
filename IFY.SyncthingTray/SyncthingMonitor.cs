@@ -3,16 +3,17 @@ using Microsoft.Extensions.Options;
 
 namespace IFY.SyncthingTray;
 
-public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api, IOptions<SyncthingMonitor.Configuration> config) : BackgroundService
+public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api, IOptions<SyncthingMonitor.Configuration> config, IHost host) : BackgroundService
 {
     public sealed class Configuration
     {
-        public int PollDelay { get; set; } = 60_000;
+        public int PollDelay { get; set; }
         public bool NotifyOnFailure { get; set; }
     }
 
     private readonly ILogger<SyncthingMonitor> _logger = logger;
     private readonly SyncthingAPI _api = api;
+    private readonly IHost _host = host;
 
     public int PollDelay { get; } = config.Value.PollDelay;
     public bool NotifyOnFailure { get; } = config.Value.NotifyOnFailure;
@@ -44,7 +45,7 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
                         // Wait for poll
                         cts.Token.WaitHandle.WaitOne();
                     }
-
+                    else 
                     // React to important event types
                     if (events!.Any(e => e.Type is StEventType.DeviceConnected or StEventType.DeviceDisconnected or StEventType.StateChanged))
                     {
@@ -62,6 +63,9 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
 
             await update(stoppingToken);
         }
+
+        OnError?.Invoke("Not monitoring");
+        await _host.StopAsync();
     }
 
     private async Task update(CancellationToken token)
@@ -70,7 +74,7 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
         var (isSuccess, conn) = await _api.GetOverallStateAsync(token);
         if (!isSuccess)
         {
-            OnError?.Invoke("Failed to update");
+            OnError?.Invoke("Lost Syncthing");
             return;
         }
         if (conn?.AllConnected != true)
@@ -83,7 +87,7 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
         var (isSuccess2, folderIds) = await _api.GetFolderIdsAsync(token);
         if (!isSuccess2)
         {
-            OnError?.Invoke("Failed to update");
+            OnError?.Invoke("Lost Syncthing");
             return;
         }
 
@@ -102,7 +106,7 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
         // Fire appropriate event
         if (failed)
         {
-            OnError?.Invoke("Failed to update");
+            OnError?.Invoke("Lost Syncthing");
         }
         else
         {

@@ -1,6 +1,4 @@
-﻿using System.Collections.Concurrent;
-
-namespace IFY.SyncthingTray;
+﻿namespace IFY.SyncthingTray;
 
 public class SystrayForm : Form
 {
@@ -88,7 +86,10 @@ public class SystrayForm : Form
 
     public void Stop()
     {
-        Invoke(Close);
+        if (!Disposing && !IsDisposed)
+        {
+            Invoke(Close);
+        }
     }
 
     public void ShowBalloonTip(int timeout, string tipTitle, string tipText, ToolTipIcon tipIcon)
@@ -96,6 +97,16 @@ public class SystrayForm : Form
 
     public void ReplaceIcon(Bitmap icon)
     {
+        if (Disposing || IsDisposed)
+        {
+            return;
+        }
+        if (InvokeRequired)
+        {
+            Invoke(() => ReplaceIcon(icon));
+            return;
+        }
+
         _icon.Icon = Icon.FromHandle(icon.GetHicon());
     }
 

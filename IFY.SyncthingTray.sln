@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34219.65
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IFY.SyncthingTray", "IFY.SyncthingTray\IFY.SyncthingTray.csproj", "{D2929788-EE2B-43D8-823A-8BED2D787091}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Meta", "Meta", "{18EF65FA-7DCE-4BCF-A795-9FD391D9AB3D}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D2929788-EE2B-43D8-823A-8BED2D787091}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2929788-EE2B-43D8-823A-8BED2D787091}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2929788-EE2B-43D8-823A-8BED2D787091}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2929788-EE2B-43D8-823A-8BED2D787091}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A9F137F1-A47B-44A0-BB8B-9FA9100B6CBE}
+	EndGlobalSection
+EndGlobal

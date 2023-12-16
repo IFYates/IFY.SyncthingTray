@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace IFY.SyncthingTray;
 
-public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api, IOptions<SyncthingMonitor.Configuration> config, IHost host) : BackgroundService
+public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api, IOptions<SyncthingMonitor.Configuration> config) : BackgroundService
 {
     public sealed class Configuration
     {
@@ -13,7 +13,6 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
 
     private readonly ILogger<SyncthingMonitor> _logger = logger;
     private readonly SyncthingAPI _api = api;
-    private readonly IHost _host = host;
 
     public int PollDelay { get; } = config.Value.PollDelay;
     public bool NotifyOnFailure { get; } = config.Value.NotifyOnFailure;
@@ -65,7 +64,6 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
         }
 
         OnError?.Invoke("Not monitoring");
-        await _host.StopAsync();
     }
 
     private async Task update(CancellationToken token)

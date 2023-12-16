@@ -54,8 +54,7 @@ monitor.OnStateChanged = () =>
 {
     // Derive overall state
     var state = getOverallState();
-    systrayIcon.ReplaceIcon(GetStateIcon(state));
-    systrayIcon.HoverText = state switch
+    var reason = state switch
     {
         Status.Disconnected => "Disconnected",
         Status.Error => "Folders need attention",
@@ -64,18 +63,22 @@ monitor.OnStateChanged = () =>
         Status.OK => "Up-to-date",
         _ => "Unknown",
     };
-    _lastError = null;
 
-    if (monitor.NotifyOnFailure && state is Status.Error or Status.Disconnected)
+    systrayIcon.ReplaceIcon(GetStateIcon(state));
+    systrayIcon.HoverText = reason;
+
+    if (_lastError != reason && monitor.NotifyOnFailure && state is Status.Error or Status.Disconnected)
     {
-        systrayIcon.IconLeftClickAction();
+        showNotification(state);
+        _lastError = reason;
     }
 };
 
 // Start
-_ = host.RunAsync().ContinueWith(_ => systrayIcon.Stop());
+var cts = new CancellationTokenSource();
+_ = host.RunAsync(cts.Token).ContinueWith(_ => systrayIcon.Stop());
 Application.Run(systrayIcon);
-await host.StopAsync();
+cts.Cancel();
 
 Status getOverallState()
 {

@@ -15,8 +15,18 @@ builder.Services.Configure<SyncthingMonitor.Configuration>(builder.Configuration
 builder.Services.AddHostedService<SyncthingMonitor>();
 builder.Services.AddSingleton<SyncthingAPI>();
 
+var images = new Dictionary<Status, Bitmap>()
+{
+    [Status.Unknown] = Images.icon_X,
+    [Status.Busy] = Images.icon_work,
+    [Status.OK] = Images.icon_G,
+    [Status.OutOfSync] = Images.icon_A,
+    [Status.Error] = Images.icon_R,
+    [Status.Disconnected] = Images.icon_R,
+}.AsReadOnly();
+
 // Configure systray icon
-var systrayIcon = new SystrayForm(Application.ProductName!, Images.icon_X)
+var systrayIcon = new SystrayForm(Application.ProductName!, images[Status.Unknown])
 {
     HoverText = "Initialising..."
 };
@@ -32,7 +42,7 @@ systrayIcon.IconDoubleClickAction = () =>
     // Open Syncthing website
     Process.Start(new ProcessStartInfo(api.Host) { UseShellExecute = true });
 };
-systrayIcon.IconRightClickAction = () => systrayIcon.Close();
+systrayIcon.IconRightClickAction = systrayIcon.Close;
 systrayIcon.IconLeftClickAction = () =>
 {
     showNotification(getOverallState());
@@ -80,6 +90,8 @@ _ = host.RunAsync(cts.Token).ContinueWith(_ => systrayIcon.Stop());
 Application.Run(systrayIcon);
 cts.Cancel();
 
+Bitmap GetStateIcon(Status state)
+    => images.TryGetValue(state, out var icon) ? icon : images[Status.Unknown];
 Status getOverallState()
 {
     // Derive overall state
@@ -93,15 +105,6 @@ Status getOverallState()
     }
     return Status.OK;
 }
-static Bitmap GetStateIcon(Status state)
-    => state switch
-    {
-        Status.Busy => Images.icon_work,
-        Status.OK => Images.icon_G,
-        Status.OutOfSync => Images.icon_A,
-        Status.Error or Status.Disconnected => Images.icon_R,
-        _ => Images.icon_X
-    };
 void showNotification(Status state)
 {
     // Copy image to temp file

@@ -1,7 +1,12 @@
-﻿namespace IFY.SyncthingTray;
+﻿using System.Runtime.InteropServices;
+
+namespace IFY.SyncthingTray;
 
 public class SystrayForm : Form
 {
+    private readonly Icon _defaultIcon;
+    private Bitmap? _currentIcon;
+
     private readonly NotifyIcon _icon;
 
     private string? _hoverText;
@@ -23,9 +28,11 @@ public class SystrayForm : Form
     public SystrayForm(string text, Bitmap icon)
     {
         Text = text;
+        _defaultIcon = Icon.FromHandle(icon.GetHicon());
+        _currentIcon = icon;
         _icon = new()
         {
-            Icon = Icon.FromHandle(icon.GetHicon()),
+            Icon = _defaultIcon,
             Text = text,
         };
 
@@ -97,6 +104,11 @@ public class SystrayForm : Form
 
     public void ReplaceIcon(Bitmap icon)
     {
+        if (_currentIcon == icon)
+        {
+            return;
+        }
+
         if (Disposing || IsDisposed)
         {
             return;
@@ -107,7 +119,16 @@ public class SystrayForm : Form
             return;
         }
 
-        _icon.Icon = Icon.FromHandle(icon.GetHicon());
+        try
+        {
+            _currentIcon = icon;
+            _icon.Icon = Icon.FromHandle(icon.GetHicon());
+        }
+        catch (ExternalException)
+        {
+            // GDI+ sometimes fails on GetHicon
+            _icon.Icon = _defaultIcon;
+        }
     }
 
     protected override void OnShown(EventArgs e)

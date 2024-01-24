@@ -2,5 +2,6 @@
 *.user
 bin
 obj
+pub
 .vs
 appsettings.local.json

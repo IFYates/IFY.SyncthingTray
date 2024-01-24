@@ -28,13 +28,13 @@ public class StFolder
         Id = folder.Id;
         Name = folder.Name;
 
-        if (Invalid?.Length > 0 || PullErrors > 0 || Errors > 0 || Error?.Length > 0)
-        {
-            Status = Status.Error;
-        }
-        else if (State is "scanning" or "syncing")
+        if (State is "scanning" or "syncing")
         {
             Status = Status.Busy;
+        }
+        else if (Invalid?.Length > 0 || PullErrors > 0 || Errors > 0 || Error?.Length > 0)
+        {
+            Status = Status.Error;
         }
         else if (NeedBytes > 0 || NeedFiles > 0)
         {

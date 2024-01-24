@@ -44,7 +44,7 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
                         // Wait for poll
                         cts.Token.WaitHandle.WaitOne();
                     }
-                    else 
+                    else
                     // React to important event types
                     if (events!.Any(e => e.Type is StEventType.DeviceConnected or StEventType.DeviceDisconnected or StEventType.StateChanged))
                     {
@@ -99,6 +99,13 @@ public class SyncthingMonitor(ILogger<SyncthingMonitor> logger, SyncthingAPI api
                 failed = true;
                 break;
             }
+        }
+
+        // Find lost folders
+        folderIds = _folderStates.Keys.Where(k => !folderIds.Contains(k)).ToArray();
+        foreach (var folderId in folderIds)
+        {
+            _folderStates[folderId].Status = Status.Unknown;
         }
 
         // Fire appropriate event

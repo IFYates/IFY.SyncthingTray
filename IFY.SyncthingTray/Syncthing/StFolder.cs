@@ -5,7 +5,7 @@ public class StFolder
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
-    public Status Status { get; private set; }
+    public Status Status { get; set; }
 
     #region From JSON
 
